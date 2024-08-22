@@ -1,0 +1,105 @@
+﻿<Window x:Class="Ophiuchus.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ophiuchus : Conda Environment Manager" Height="550" Width="800"
+        Background="DimGray">
+    <Border>
+        <Grid>
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="280"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Conda Path Selection -->
+                <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,10">
+                    <Label Content="Conda Env File Path:" FontWeight="Bold"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="CondaPathInput" Background="Gray" Height="25" VerticalContentAlignment="Center"/>
+                        <Button Content="Browse" Grid.Column="1" Width="80" Height="25" Margin="5,0,0,0" Click="OnBrowseClick"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Separator -->
+                <Separator Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,0,10"/>
+
+                <!-- Buttons Row -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,10">
+                    <Button Content="Create Env" Width="150" Height="30" Margin="0,0,10,0" Click="OnBtn_CreateEnv"/>
+                    <Button Content="Remove Selected Env" Width="150" Height="30" Margin="0,0,10,0" Click="OnBtn_RemoveEnv"/>
+                    <Button Content="Create env file" Width="150" Height="30" Click="OnBtn_CreateEnvSaveFile"/>
+                </StackPanel>
+
+                <!-- Environment List -->
+                <StackPanel Grid.Row="3" Grid.Column="0">
+                    <Label Content="Conda Environments:" FontWeight="Bold"/>
+                    <ListBox x:Name="envList" 
+                         Height="330"
+                         ItemsSource="{Binding EnvironmentList}"
+                         SelectionChanged="OnClickEnv"
+                         Margin="0,0,10,0"/>
+                </StackPanel>
+
+                <!-- Dependencies Grid -->
+                <StackPanel Grid.Row="3" Grid.Column="1">
+                    <Label Content="Environment Dependencies:" FontWeight="Bold"/>
+                    <Grid>
+                        <DataGrid x:Name="dependency" 
+                              Height="330"
+                              AutoGenerateColumns="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Dependency Name" Binding="{Binding Path=dep}" Width="140"/>
+                                <DataGridTextColumn Header="Version" Binding="{Binding Path=version}" Width="*"/>
+                                <DataGridTextColumn Header="Source" Binding="{Binding Path=source}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Loading Indicator -->
+                        <Grid x:Name="LoadingIndicator" 
+                          Background="#80000000" 
+                          Visibility="Collapsed">
+                            <ProgressBar 
+                            Width="48" 
+                            Height="48" 
+                            IsIndeterminate="True" 
+                            Style="{StaticResource MaterialDesignCircularProgressBar}" />
+                        </Grid>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Status Label -->
+                <Label x:Name="Status" 
+                   Content="Status" 
+                   Grid.Row="4"
+                   Grid.ColumnSpan="2"
+                   Margin="0,10,0,0"/>
+
+
+
+            </Grid>
+            <!-- 전체 화면 로딩 인디케이터 -->
+            <Grid x:Name="GlobalLoadingIndicator" 
+                  Background="#80000000" 
+                  Visibility="Visible"
+                  Panel.ZIndex="9999">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" Width="200" Height="20" Margin="0,0,0,10"/>
+                    <TextBlock x:Name="LoadingBar" Text="Loading..." Foreground="White" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+
+</Window>
