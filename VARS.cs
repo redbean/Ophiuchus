@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,7 @@ namespace Ophiuchus
         public static string CMD_ENV = "env list";
         public static string CMD_DEP = "list -n";
         public static string CMD_EXPORT = "env export -n";
+        public static string CMD_ACTIVATE = "activate";
 
         //conda env create -n myproject --file custom_env.yaml
         //conda env export -n 환경이름 > environment.yaml
@@ -24,10 +26,17 @@ namespace Ophiuchus
         public static string RESP_ERROR = "error";
 
 
+        public static string PATH_CONDA_DEFAULTPATH = @"C:\ProgramData\anaconda3";
+
 
         public static string GetCreateCmd(string env_name, string python_ver)
         {
             return $"{CMD_CREATE_ENV} {env_name} {ARG_CREATE_ENV_PYTHON}{python_ver} {ARG_FORCE_Y}";
+        }
+
+        public static string GetDependancy(string env_name)
+        {
+            return $"{CMD_DEP} {env_name}";
         }
 
         public static string GetRemoveCmd(string env_name)
@@ -35,16 +44,16 @@ namespace Ophiuchus
             return $"{CMD_REMOVE_ENV} {env_name}";
         }
 
-        public static string GetExportCmd(string env_name)
+        public static string GetExportCmd(string export_path, string env_name)
         {
-            return $"{CMD_EXPORT} {env_name} > environment_{env_name}.yaml";
+            string yaml = Path.Combine(export_path, $"environment_{env_name}.yaml");
+            return $"{CMD_EXPORT} {env_name} > {yaml}";
         }
         public static string GetImportCmd(string env_name, string yamlFilePath)
         {
             return $"env {CMD_CREATE_ENV} {env_name} --file {yamlFilePath} {ARG_FORCE_Y}";
             //conda env create -n 환경 --file 야믈 -y
         }
-
     }
     class Deps
     {
@@ -59,13 +68,15 @@ namespace Ophiuchus
             this.source = source;
         }
     }
-    enum OphiuchusYAMLError
+    enum OphiuchusError
     {
         Success = 0,
         FileNotFoundError = 1,
         YAMLMissingKeyError = 2,
         YAMLParseError = 3,
-        ExceptionError = 4
+        ExceptionError = 4,
+        CondaActivateNotFoundError = 5,
+
     }
 
 }
