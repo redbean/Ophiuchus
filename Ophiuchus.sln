@@ -8,6 +8,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "솔루션 항목", "솔루션 항목", "{F98B596D-6623-4C3A-BC3C-391F9F3E704E}"
 	ProjectSection(SolutionItems) = preProject
 		Resources\41676778.png = Resources\41676778.png
+		CondaService.cs = CondaService.cs
+		Strings.xml = Strings.xml
 	EndProjectSection
 EndProject
 Global
