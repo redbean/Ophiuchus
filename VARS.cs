@@ -11,7 +11,10 @@ namespace Ophiuchus
         public static string CMD_CONDA = "conda";
         public static string CMD_ENV = "env list";
         public static string CMD_DEP = "list -n";
-        
+        public static string CMD_EXPORT = "env export -n";
+
+        //conda env create -n myproject --file custom_env.yaml
+        //conda env export -n 환경이름 > environment.yaml
         public static string CMD_CREATE_ENV = "create -n";
         public static string ARG_CREATE_ENV_PYTHON = "python=";
         public static string ARG_FORCE_Y = "-y";
@@ -20,16 +23,26 @@ namespace Ophiuchus
 
         public static string RESP_ERROR = "error";
 
+
+
         public static string GetCreateCmd(string env_name, string python_ver)
         {
-            //{ ARG_CREATE_ENV_PYTHON}
-            //{ python_ver}
-            return $"{CMD_CREATE_ENV} {env_name} {ARG_FORCE_Y}";
+            return $"{CMD_CREATE_ENV} {env_name} {ARG_CREATE_ENV_PYTHON}{python_ver} {ARG_FORCE_Y}";
         }
 
         public static string GetRemoveCmd(string env_name)
         {
             return $"{CMD_REMOVE_ENV} {env_name}";
+        }
+
+        public static string GetExportCmd(string env_name)
+        {
+            return $"{CMD_EXPORT} {env_name} > environment_{env_name}.yaml";
+        }
+        public static string GetImportCmd(string env_name, string yamlFilePath)
+        {
+            return $"env {CMD_CREATE_ENV} {env_name} --file {yamlFilePath} {ARG_FORCE_Y}";
+            //conda env create -n 환경 --file 야믈 -y
         }
 
     }
@@ -46,6 +59,13 @@ namespace Ophiuchus
             this.source = source;
         }
     }
-
+    enum OphiuchusYAMLError
+    {
+        Success = 0,
+        FileNotFoundError = 1,
+        YAMLMissingKeyError = 2,
+        YAMLParseError = 3,
+        ExceptionError = 4
+    }
 
 }
