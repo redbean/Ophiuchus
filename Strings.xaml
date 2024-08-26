@@ -1,0 +1,16 @@
+﻿<!-- Strings.xaml -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+
+	<!-- Btns Tooltip -->
+	<system:String x:Key="MainBtn_Create">새로운 콘다 환경을 만듭니다.</system:String>
+	<system:String x:Key="MainBtn_Import">YAML을 통해 새로운 콘다 환경을 만듭니다.</system:String>
+	<system:String x:Key="MainBtn_Remove">선택된 콘다 환경을 삭제합니다.</system:String>
+	<system:String x:Key="MainBtn_Export">선택된 콘다 환경을 YAML로 내보냅니다.</system:String>
+
+	<!-- Etc Tooltip -->
+	<system:String x:Key="MainBtn_condaPathFinder">Conda가 설치된 폴더를 선택합니다.</system:String>
+	<system:String x:Key="MainBtn_exportPathFinder">YAML등의 파일을 저장할 폴더를 선택합니다.</system:String>
+	<system:String x:Key="MainBtn_whomade">만든 이를 봅니다.</system:String>
+</ResourceDictionary>
