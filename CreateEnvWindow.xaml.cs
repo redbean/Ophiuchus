@@ -17,7 +17,19 @@ namespace Ophiuchus
     public partial class CreateEnvWindow : Window
     {
         public string EnvironmentName { get; private set; }
-        public string PythonVersion { get; private set; }
+
+        private string _pythonVersion;
+        public string PythonVersion
+        {
+            get
+            {
+                return _pythonVersion?.Split(' ')[1] ?? string.Empty;
+            }
+            set
+            {
+                _pythonVersion = value;
+            }
+        }
 
         public CreateEnvWindow()
         {
