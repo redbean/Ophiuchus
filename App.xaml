@@ -8,8 +8,12 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <materialDesign:CustomColorTheme BaseTheme="Light" PrimaryColor="DimGray" SecondaryColor="Lime" />
+                <ResourceDictionary Source="/Ophiuchus;component/Strings.xaml"/>
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- 기본 ToolTip 스타일 -->
+            <Style TargetType="ToolTip" BasedOn="{StaticResource MaterialDesignToolTip}"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
