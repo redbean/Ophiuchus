@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34616.47
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ophiuchus", "Ophiuchus.csproj", "{59AD9F8E-1001-49F4-AD96-50BF80CB7695}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ophiuchus", "Ophiuchus.csproj", "{59AD9F8E-1001-49F4-AD96-50BF80CB7695}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "솔루션 항목", "솔루션 항목", "{F98B596D-6623-4C3A-BC3C-391F9F3E704E}"
+	ProjectSection(SolutionItems) = preProject
+		Resources\41676778.png = Resources\41676778.png
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
