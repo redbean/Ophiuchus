@@ -2,10 +2,12 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection.Emit;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using YamlDotNet.RepresentationModel;
 
 namespace Ophiuchus
 {
@@ -36,7 +38,6 @@ namespace Ophiuchus
             }
         }
 
-
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -46,14 +47,20 @@ namespace Ophiuchus
         public MainWindow()
         {
             InitializeComponent();
-            LoadEnvironmentData();
-            DataContext = this;
-            IsLoading = true;
+
+            Start();
         }
 
-        private void LoadEnvironmentData()
+        private void Start()
         {
-            Task.Run(() =>
+            _ = LoadEnvironmentDataAsync();
+            DataContext = this;
+        }
+        private async Task LoadEnvironmentDataAsync()
+        {
+            this.GlobalLoadingIndicator.Visibility = Visibility.Visible;
+
+            await Task.Run(() =>
             {
                 try
                 {
@@ -86,6 +93,7 @@ namespace Ophiuchus
                         }
                         Status.Content = EnvironmentList.Count > 0 ? "Conda Lists are Loaded" : "No Conda environments found";
                     });
+
                 }
                 catch (Exception ex)
                 {
@@ -95,21 +103,24 @@ namespace Ophiuchus
                     });
                 }
             });
+            this.GlobalLoadingIndicator.Visibility = Visibility.Collapsed;
+
         }
 
         private async void OnClickEnv(object sender, SelectionChangedEventArgs e)
         {
             if (envList.SelectedItem != null)
             {
-                this.LoadingIndicator.Visibility = Visibility.Visible;
+                this.GlobalLoadingIndicator.Visibility = Visibility.Visible;
                 var deps = new List<Deps>();
                 selectedEnvironment = envList.SelectedItem as string;
-                
+
                 var data = await ReadDependenciesAsync( selectedEnvironment );
+
                 var lines = data.Split(new[] {'\n', '\r'}, StringSplitOptions.RemoveEmptyEntries);
 
                 int startIndex = 0;
-                // 첫 번째 줄이 헤더인지 확인
+
                 foreach ( string line in lines )
                 {
                     bool hasHeader = line.StartsWith("#");
@@ -126,32 +137,62 @@ namespace Ophiuchus
 
                 this.dependency.ItemsSource = null; 
                 this.dependency.ItemsSource = deps;
-                this.LoadingIndicator.Visibility = Visibility.Collapsed;
+                this.GlobalLoadingIndicator.Visibility = Visibility.Collapsed;
                 this.Status.Content = $"Selected Env : {selectedEnvironment}";
             }
         }
 
-        private void OnBtn_CreateEnv(object sender, RoutedEventArgs e)
+        private async void OnBtn_CreateEnv(object sender, RoutedEventArgs e)
         {
             var createEnvWindow = new CreateEnvWindow();
             if (createEnvWindow.ShowDialog() == true)
             {
                 string envName = createEnvWindow.EnvironmentName;
                 string pythonVersion = createEnvWindow.PythonVersion;
-
-                var proc = Utils.RunCondaCmd(VARS.GetCreateCmd(envName, pythonVersion));
+                this.GlobalLoadingIndicator.Visibility = Visibility.Visible;
                 this.Status.Content = VARS.GetCreateCmd(envName, pythonVersion);
-                try
-                {
-                    proc.Start();
-                    proc.WaitForExit();
-                }
-                catch (Exception)
-                {
-                    MessageBox.Show($"Creating Conda is failed", "Environment Creation", MessageBoxButton.OK, MessageBoxImage.Error);
-                    throw;
-                }
+                
+                await Task.Run(async () =>
+                    {
+                        await Utils.RunCommandWithVisibleCmd(VARS.GetCreateCmd(envName, pythonVersion));
+                        
+                    });
+                this.GlobalLoadingIndicator.Visibility = Visibility.Collapsed;
             }
+            LoadEnvironmentDataAsync();
+        }
+
+        private async void OnBtn_ImportEnv(object sender, RoutedEventArgs e)
+        {
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.Filters.Add(new CommonFileDialogFilter("YAML Files", "*.yaml,*.yml"));
+            dialog.Filters.Add(new CommonFileDialogFilter("All Files", "*.*"));
+            dialog.DefaultExtension = ".yaml";
+            string filePath = string.Empty;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                filePath = dialog.FileName;
+            }
+            string envName = string.Empty ;
+            var (result, resultMsg)  = Shit(filePath, ref envName);
+            if(!result)
+            {
+                MessageBox.Show($"{resultMsg}", "Yaml Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            MessageBox.Show($"{envName}", "Yaml Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+            this.GlobalLoadingIndicator.Visibility = Visibility.Visible;
+            this.Status.Content = VARS.GetImportCmd(envName, yamlFilePath:filePath);
+
+            await Task.Run(async () =>
+            {
+                await Utils.RunCommandWithVisibleCmd(VARS.GetImportCmd(envName, yamlFilePath: filePath));
+
+            });
+            this.GlobalLoadingIndicator.Visibility = Visibility.Collapsed;
+            await LoadEnvironmentDataAsync();
+
         }
 
         private void OnBtn_RemoveEnv(object sender, RoutedEventArgs e)
@@ -161,6 +202,8 @@ namespace Ophiuchus
                 MessageBox.Show($"Please Select Conda Env under the list", "Environment Removal", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
+            this.GlobalLoadingIndicator.Visibility = Visibility.Visible;
+
             var proc = Utils.RunCondaCmd(VARS.CMD_REMOVE_ENV, this.selectedEnvironment);
             try
             {
@@ -171,23 +214,48 @@ namespace Ophiuchus
             {
                 MessageBox.Show($"Removal Env is Failed", "Environment Removal", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            LoadEnvironmentData();
+            this.GlobalLoadingIndicator.Visibility = Visibility.Collapsed;
+
+            LoadEnvironmentDataAsync();
         }
 
-        private void OnBtn_CreateEnvSaveFile(object sender, RoutedEventArgs e)
+        private async void OnBtn_ExportEnv(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Not Implemented Yet.", "NotImplementedException", MessageBoxButton.OK, MessageBoxImage.Error);
+            if(string.IsNullOrEmpty(this.selectedEnvironment))
+            {
+                MessageBox.Show("Please Select Environment", "Not Selected Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+                
+            string envName = this.selectedEnvironment.ToString();
+            this.GlobalLoadingIndicator.Visibility = Visibility.Visible;
+            await Task.Run(async () =>
+            {
+                await Utils.RunCommandWithVisibleCmd(VARS.GetExportCmd(envName));
+            });
+            this.GlobalLoadingIndicator.Visibility = Visibility.Collapsed;
+
+            await LoadEnvironmentDataAsync();
+        }
+
+        private void OnMakerClick(object sender, RoutedEventArgs e)
+        {
+            var Whomade = new Whomade();
+            Whomade.ShowDialog();
         }
 
 
-
+        //TODO 다른 클래스로 빼기
         private async Task<string> ReadDependenciesAsync(string env)
         {
             var proc = Utils.RunCondaCmd(VARS.CMD_DEP, env);
             try
             {
+                IsLoading = true;
+
                 proc.Start();
                 string output = await proc.StandardOutput.ReadToEndAsync();
+                IsLoading = false;
                 return output;
             }
             catch 
@@ -199,12 +267,6 @@ namespace Ophiuchus
 
         private void OnBrowseClick(object sender, RoutedEventArgs e)
         {
-            //var dialog = new System.Windows.Forms.FolderBrowserDialog();
-            //System.Windows.Forms.DialogResult result = dialog.ShowDialog();
-            //if (result == System.Windows.Forms.DialogResult.OK)
-            //{
-            //    CondaPathInput.Text = dialog.SelectedPath;
-            //}
             CommonOpenFileDialog dialog = new CommonOpenFileDialog();
             dialog.IsFolderPicker = true;
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
@@ -212,6 +274,53 @@ namespace Ophiuchus
                 CondaPathInput.Text = dialog.FileName; // 테스트용, 폴더 선택이 완료되면 선택된 폴더를 label에 출력
             }
         }
+
+        //TODO 다른 클래스로 빼기
+        private (bool isSuccess, OphiuchusYAMLError error) Shit(string path, ref string envName)
+        {
+            List<string> requiredKeys = new List<string> { "name", "channels", "dependencies" };
+            try
+            {
+                using (var reader = new StreamReader(path))
+                {
+                    var yaml = new YamlStream();
+                    yaml.Load(reader);
+
+                    var mapping = (YamlMappingNode)yaml.Documents[0].RootNode;
+
+                    var missingKeys = new List<string>();
+                    foreach (var key in requiredKeys)
+                    {
+                        if (!mapping.Children.ContainsKey(key))
+                        {
+                            missingKeys.Add(key);
+                        }
+                    }
+                    if (missingKeys.Count > 0)
+                    {
+                        return (false, OphiuchusYAMLError.YAMLMissingKeyError);
+                    }
+                    if (mapping.Children.TryGetValue("name", out var nameNode) && nameNode is YamlScalarNode scalarNode)
+                    {
+                        envName = scalarNode?.Value ?? string.Empty;
+                    }
+                    return (true, OphiuchusYAMLError.Success);
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                return (false, OphiuchusYAMLError.FileNotFoundError);
+            }
+            catch (YamlDotNet.Core.YamlException e)
+            {
+                return (false, OphiuchusYAMLError.YAMLParseError);
+            }
+            catch (Exception e)
+            {
+                return (false, OphiuchusYAMLError.ExceptionError);
+            }
+        }
+        
 
     }
 }
